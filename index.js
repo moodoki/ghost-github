@@ -15,6 +15,8 @@ const request = Promise.promisify(require("request"));
 class GitHubStorage extends BaseStorage {
     constructor(config) {
         super();
+	
+	console.log(config);
 
         this.client = new GitHub();
         this.config = config;
