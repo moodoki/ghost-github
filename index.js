@@ -20,14 +20,14 @@ class GitHubStorage extends BaseStorage {
 
         this.client = new GitHub();
         this.config = config;
-        config.branch = config.branch || "master";
-        config.destination = config.destination || "";
+        config.branch = process.env.GHOST_GH_BRANCH || config.branch || "master";
+        config.destination = process.env.GHOST_GH_DESTINATION || config.destination || "";
 
         this.client.authenticate({
-            type: config.type,
-            username: config.user,
-            password: config.password,
-            token: config.token,
+            type: process.env.GHOST_GH_TYPE,
+            username: process.env.GHOST_GH_USER,
+            password: process.env.GHOST_GH_PASSWORD,
+            token: process.env.GHOST_GH_TOKEN,
         });
     }
 
