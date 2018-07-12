@@ -12,16 +12,26 @@ const readFile = Promise.promisify(fs.readFile);
 const removeLeadingSlash = require("remove-leading-slash");
 const request = Promise.promisify(require("request"));
 
+
 class GitHubStorage extends BaseStorage {
-    constructor(config) {
+    constructor() {
         super();
+	var config = {branch : "master",
+		      destination : "",
+		      repo : process.env.GHOST_GH_REPO
+		     }
+		      
 	
+	console.log('GHStorage config:')
 	console.log(config);
 
         this.client = new GitHub();
         this.config = config;
         config.branch = process.env.GHOST_GH_BRANCH || config.branch || "master";
         config.destination = process.env.GHOST_GH_DESTINATION || config.destination || "";
+
+	console.log('GHStorage config:')
+	console.log(config);
 
         this.client.authenticate({
             type: process.env.GHOST_GH_TYPE,
