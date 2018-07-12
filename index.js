@@ -18,7 +18,7 @@ class GitHubStorage extends BaseStorage {
         super();
 	var config = {branch : "master",
 		      destination : "",
-		      owner: process.env.GHOST_GH_REPO_OWNER,
+		      user: process.env.GHOST_GH_REPO_OWNER,
 		      repo : process.env.GHOST_GH_REPO,
 		     }
 		      
