@@ -13,50 +13,21 @@ cp -r node_modules/ghost-github content/storage/ghost-github
 
 ## Usage
 
-Add the following to your configuration file depending on the version of Ghost you have. Replace values accordingly.
+Add the following to your (heroku) environment variables
 
-### < 1.0.0
+```bash
+#Read by Ghost itself (can be in config.json)
+heroku config:set \
+    config__storage__active=ghost-github
 
-```js
-storage: {
-    active: "ghost-github",
-    "ghost-github": {
-        // Required: Can either be basic, oauth, or token
-        type: "oauth",
-        user: "[my username here]",
-        // Either: GitHub login credentials (basic only)
-        password: "[my password here]",
-        // Either: Personal access token (for token and oauth)
-        token: "[my token here]",
-        // Required: Name of repo you want to save files to
-        repo: "ghost-assets",
-        // Optional: Will save to branch of repo, defaults to master
-        branch: "gh-pages",
-        // Optional: Will place the image in the specified directory rather than root
-        destination: "",
-        // Optional: Will use base URL for image requests
-        baseUrl: "https://cdn.example.com"
-    }
-}
-```
-
-### >= 1.0.0
-
-Options from above also apply here except for the formatting.
-
-```json
-"storage": {
-    "active": "ghost-github",
-    "ghost-github": {
-        "type": "...",
-        "user": "...",
-        "password": "...",
-        "token": "...",
-        "repo": "...",
-        "branch": "..."
-    }
-}
-
+#Read by this adapter
+heroku config:set \
+    GHOST_GH_TYPE=token \
+    GHOST_GH_REPO=... \
+    GHOST_GH_REPO_OWNER=... \
+    GHOST_GH_TOKEN=... \
+    GHOST_GH_DESTINATION=... \
+    GHOST_GH_BRANCH=...
 ```
 
 ## Questions
