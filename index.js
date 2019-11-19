@@ -1,98 +1,78 @@
 "use strict";
 
-const Promise = require("bluebird");
 const BaseStorage = require("ghost-storage-base");
-const GitHub = require("github");
 const fs = require("fs");
+const GitHub = require("github");
 const path = require("path");
-
-const buildUrl = require("build-url");
-const isUrl = require("is-url");
-const readFile = Promise.promisify(fs.readFile);
+const Promise = require("bluebird");
 const removeLeadingSlash = require("remove-leading-slash");
 const request = Promise.promisify(require("request"));
 
-
-class GitHubStorage extends BaseStorage {
-    constructor() {
+class GitHubStorage extends BaseStorage{
+    constructor(config){
         super();
-	var config = {branch : "master",
-		      destination : "",
-		      user: process.env.GHOST_GH_REPO_OWNER,
-		      repo : process.env.GHOST_GH_REPO,
-		     }
-		      
-	
-	console.log('GHStorage config:')
-	console.log(config);
-
         this.client = new GitHub();
-        this.config = config;
+
         config.branch = process.env.GHOST_GH_BRANCH || config.branch || "master";
         config.destination = process.env.GHOST_GH_DESTINATION || config.destination || "";
+        config.user = process.env.GHOST_GH_REPO_OWNER;
+        config.password = process.env.GHOST_GH_PASSWORD;
+        config.token = process.env.GHOST_GH_TOKEN;
+        config.type = process.env.GHOST_GH_TYPE;
+        config.repo = process.env.GHOST_GH_REPO;
+        config.username = process.env.GHOST_GH_USER;
 
-	console.log('GHStorage config:')
-	console.log(config);
+        this.config = config;
 
-        this.client.authenticate({
-            type: process.env.GHOST_GH_TYPE,
-            username: process.env.GHOST_GH_USER,
-            password: process.env.GHOST_GH_PASSWORD,
-            token: process.env.GHOST_GH_TOKEN,
-        });
     }
-
-    delete() {
+    
+    delete(){
         // TODO: Find a way to get the blob SHA of the target file
         return Promise.reject("Not implemented");
     }
-
-    exists(filename, targetDir) {
+    
+    exists(filename, targetDir){
         const filepath = path.join(targetDir || this.getTargetDir(), filename);
-
         return request(this.getUrl(filepath))
-            .then(res => res.statusCode === 200)
+            .then(res => (res.statusCode === 200))
             .catch(() => false);
     }
-
-    read(options) {
-        // Not needed because absolute URLS are already used to link to the images
+    
+    read(options){
     }
-
-    save(file, targetDir) {
-        const {branch, repo, user} = this.config;
+    
+    save(file, targetDir){
+        const config = this.config;
         const dir = targetDir || this.getTargetDir();
-
-        return Promise.join(this.getUniqueFileName(file, dir), readFile(file.path, "base64"), (filename, data) => {
+        return Promise.join(this.getUniqueFileName(file, dir), Promise.promisify(fs.readFile)(file.path, "base64"), (filename, data) => {
+            // Authenticate for the next request
+            this.client.authenticate({
+                type: config.type,
+                username: config.user,
+                password: config.password,
+                token: config.token,
+            });
             return this.client.repos.createFile({
-                owner: user,
-                repo: repo,
-                branch: branch,
+                owner: config.user,
+                repo: config.repo,
                 message: "Add new image",
-                path: this.getFilepath(filename),
+                path: removeLeadingSlash(filename),
                 content: data
             });
         })
             .then(res => res.data.content.download_url)
             .catch(Promise.reject);
     }
-
-    serve() {
+    
+    serve(){
         return (req, res, next) => {
             next();
         };
     }
-
-    getUrl(filename) {
-        const {baseUrl, branch, repo, user} = this.config;
-        let url = isUrl(baseUrl) ? baseUrl : `https://raw.githubusercontent.com/${user}/${repo}/${branch}`;
-        url = buildUrl(url, {path: this.getFilepath(filename)});
-
-        return url;
-    }
-
-    getFilepath(filename) {
-        return removeLeadingSlash(path.join(this.config.destination, filename));
+    
+    getUrl(filename){
+        const config = this.config;
+        return `https://raw.githubusercontent.com/${config.user}/${config.repo}/${config.branch || "master"}/${removeLeadingSlash(this.config.destination, filename)}`;
     }
 }
 
